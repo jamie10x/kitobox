@@ -16,7 +16,7 @@ room = "2.7.2"
 ksp = "2.2.0-2.0.2"
 
 androidxPdf = "1.0.0-alpha10"
-androidxFragment = "1.8.1"
+androidxFragment = "1.8.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

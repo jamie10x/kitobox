@@ -1,14 +1,11 @@
 package com.jamie.kitobox.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import com.jamie.kitobox.data.repository.AppTheme
 
 private val KitoboxDarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
@@ -28,20 +25,27 @@ private val KitoboxLightColorScheme = lightColorScheme(
     /* Other default colors can be overridden here */
 )
 
+private val KitoboxSepiaColorScheme = lightColorScheme(
+    primary = SepiaPrimary,
+    background = SepiaBackground,
+    surface = SepiaBackground,
+    onPrimary = Color.White,
+    onBackground = SepiaOnSurface,
+    onSurface = SepiaOnSurface,
+    onSurfaceVariant = SepiaOnSurface.copy(alpha = 0.7f)
+)
+
 @Composable
 fun KitoboxTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    appTheme: AppTheme = AppTheme.LIGHT,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> KitoboxDarkColorScheme
-        else -> KitoboxLightColorScheme
+    val colorScheme = when (appTheme) {
+        AppTheme.LIGHT -> KitoboxLightColorScheme
+        AppTheme.DARK -> KitoboxDarkColorScheme
+        AppTheme.SEPIA -> KitoboxSepiaColorScheme
     }
+
 
     MaterialTheme(
         colorScheme = colorScheme,

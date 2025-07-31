@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.androidx.pdf.viewer)
     implementation(libs.androidx.fragment.ktx)
 
+    implementation("androidx.fragment:fragment-compose:1.8.8")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -3,6 +3,7 @@ package com.jamie.kitobox.features.notes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -13,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,9 +32,12 @@ fun NotesSummaryScreen(
     onAnnotationClick: (Int) -> Unit
 ) {
     val annotations by viewModel.annotations.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     NotesSummaryContent(
         annotations = annotations,
+        searchQuery = searchQuery,
+        onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
         onNavigateBack = onNavigateBack,
         onAnnotationClick = onAnnotationClick
     )
@@ -42,6 +47,8 @@ fun NotesSummaryScreen(
 @Composable
 fun NotesSummaryContent(
     annotations: List<BookAnnotation>,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onAnnotationClick: (Int) -> Unit
 ) {
@@ -49,18 +56,43 @@ fun NotesSummaryContent(
         topBar = {
             TopAppBar(
                 title = { Text("Annotations", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Navigate back") } },
-                actions = { IconButton(onClick = { /*TODO*/ }) { Icon(Icons.Default.Search, "Search annotations") } }
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Navigate back")
+                    }
+                }
             )
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            if (annotations.isEmpty()) {
+            TextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Search annotations...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                )
+            )
+
+            if (annotations.isEmpty() && searchQuery.isBlank()) {
                 EmptyState()
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     items(annotations) { annotation ->
-                        AnnotationCard(annotation = annotation, onClick = { onAnnotationClick(annotation.pageNumber) })
+                        AnnotationCard(
+                            annotation = annotation,
+                            onClick = { onAnnotationClick(annotation.pageNumber) }
+                        )
                     }
                 }
             }
@@ -97,10 +129,17 @@ fun EmptyState() {
 
 @Preview(showBackground = true)
 @Composable
-fun NotesSummaryScreenEmptyPreview() {
+fun NotesSummaryScreenPreview() {
+    val dummyAnnotations = listOf(
+        BookAnnotation(1, 1, 12, "The quick brown fox jumps over the lazy dog.", null, AnnotationType.HIGHLIGHT),
+        BookAnnotation(2, 1, 25, "The fox is a symbol of cunning.", null, AnnotationType.NOTE)
+    )
+
     KitoboxTheme {
         NotesSummaryContent(
-            annotations = emptyList(),
+            annotations = dummyAnnotations,
+            searchQuery = "",
+            onSearchQueryChanged = {},
             onNavigateBack = {},
             onAnnotationClick = {}
         )

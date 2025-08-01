@@ -46,7 +46,7 @@ val appModule = module {
     viewModel { SettingsViewModel(userPreferencesRepository = get()) }
     viewModel { LibraryViewModel(bookRepository = get()) }
     viewModel { params ->
-        ReaderViewModel(bookRepository = get(), savedStateHandle = params.get())
+        ReaderViewModel(bookRepository = get(), annotationRepository = get(), savedStateHandle = params.get())
     }
     viewModel { params ->
         NotesSummaryViewModel(annotationRepository = get(), savedStateHandle = params.get())

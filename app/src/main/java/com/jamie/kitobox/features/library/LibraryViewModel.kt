@@ -1,6 +1,7 @@
 package com.jamie.kitobox.features.library
 
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jamie.kitobox.data.model.Book
@@ -27,10 +28,14 @@ class LibraryViewModel (
 
     fun importBook(uri: Uri) {
         viewModelScope.launch {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+            val fileType = if (extension.equals("epub", ignoreCase = true)) "epub" else "pdf"
+
             val newBook = Book(
                 title = uri.lastPathSegment ?: "Unknown Title",
                 author = null,
                 fileUri = uri.toString(),
+                fileType = fileType,
                 coverImagePath = null
             )
             bookRepository.insertBook(newBook)

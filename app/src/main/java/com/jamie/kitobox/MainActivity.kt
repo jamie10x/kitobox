@@ -1,16 +1,16 @@
 package com.jamie.kitobox
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jamie.kitobox.navigation.AppNavigation
 import com.jamie.kitobox.ui.theme.KitoboxTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val mainViewModel: MainViewModel by viewModel()
 

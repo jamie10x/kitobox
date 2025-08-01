@@ -4,19 +4,42 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.LocalMall
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SwapVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,80 +48,46 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jamie.kitobox.R
 import com.jamie.kitobox.data.model.Book
-import com.jamie.kitobox.ui.theme.KitoboxTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LibraryScreen(
     viewModel: LibraryViewModel = koinViewModel(),
-    onBookClick: (Int) -> Unit,
-    onNavigateToSettings: () -> Unit
+    onBookClick: (Int) -> Unit
 ) {
-    // --- State is collected from the ViewModel ---
     val books by viewModel.books.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-
-    var selectedItem by remember { mutableIntStateOf(0) }
-    val navItems = listOf("Library", "Discover", "Notes", "Settings")
-    val icons = listOf(Icons.AutoMirrored.Outlined.MenuBook, Icons.Outlined.Search, Icons.AutoMirrored.Outlined.Notes, Icons.Outlined.Settings)
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri -> uri?.let { viewModel.importBook(it) } }
     )
 
-    Scaffold(
-        topBar = { LibraryTopAppBar() },
-        bottomBar = {
-            NavigationBar {
-                navItems.forEachIndexed { index, item ->
-                    NavigationBarItem(
-                        icon = { Icon(icons[index], contentDescription = item) },
-                        label = { Text(item) },
-                        selected = item == "Library",
-                        onClick = { if (item == "Settings") onNavigateToSettings() }
-                    )
-                }
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Add,
-                    contentDescription = "Import Book",
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-        }
-    ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).padding(horizontal = 16.dp)) {
+    // The Scaffold has been REMOVED from this screen.
+    // It's now a Column with a FAB overlaid via Box.
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            // --- Pass state down and receive events up ---
-            SearchBar(
-                value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChanged(it) }
-            )
-
+            LibraryTopAppBar()
+            Spacer(modifier = Modifier.height(16.dp))
+            SearchBar(value = searchQuery, onValueChange = viewModel::onSearchQueryChanged)
             Spacer(modifier = Modifier.height(24.dp))
             YourBooksHeader()
             Spacer(modifier = Modifier.height(16.dp))
             BookGrid(books = books, onBookClick = onBookClick)
         }
+        FloatingActionButton(
+            onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
+            Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Import Book")
+        }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryTopAppBar() {
@@ -112,7 +101,6 @@ fun LibraryTopAppBar() {
     )
 }
 
-// --- UPDATED: SearchBar is now a stateless composable ---
 @Composable
 fun SearchBar(
     value: String,
@@ -191,15 +179,5 @@ fun BookCard(book: Book, onBookClick: () -> Unit) {
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = book.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(text = book.author ?: "Unknown Author", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LibraryScreenPreview() {
-    KitoboxTheme {
-        // You'll see a warning here because the preview can't create a real ViewModel.
-        // This is expected and can be ignored, or you can create a fake ViewModel for previews.
-        LibraryScreen(onBookClick = {}, onNavigateToSettings = {})
     }
 }

@@ -24,4 +24,11 @@ interface BookDao {
 
     @Query("DELETE FROM books WHERE id = :id")
     suspend fun deleteBookById(id: Int)
+
+    @Query("""
+        SELECT * FROM books 
+        WHERE id IN (SELECT DISTINCT bookId FROM annotations) 
+        ORDER BY title ASC
+    """)
+    fun getBooksWithAnnotations(): Flow<List<Book>>
 }

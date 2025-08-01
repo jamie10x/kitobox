@@ -35,15 +35,20 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scope = rememberCoroutineScope()
 
+    val finishOnboardingAction = {
+        viewModel.onOnboardingFinished() // <-- THE FIX: Save the preference
+        onOnboardingComplete()       // <-- Then, navigate
+    }
+
     Scaffold(
         topBar = {
             Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                // Show "Skip" button on all pages except the last one
                 AnimatedVisibility(
                     visible = pagerState.currentPage < pages.size - 1,
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
-                    TextButton(onClick = onOnboardingComplete) {
+                    // Use the combined action
+                    TextButton(onClick = finishOnboardingAction) {
                         Text("Skip")
                     }
                 }
@@ -53,25 +58,21 @@ fun OnboardingScreen(
             OnboardingBottomBar(
                 pagerState = pagerState,
                 onNextClicked = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                    }
+                    scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                 },
-                onFinishClicked = onOnboardingComplete
+                // Use the combined action
+                onFinishClicked = finishOnboardingAction
             )
         }
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
         ) { pageIndex ->
             OnboardingPageUI(page = pages[pageIndex])
         }
     }
 }
-
 @Composable
 fun OnboardingPageUI(page: OnboardingPage) {
     Column(

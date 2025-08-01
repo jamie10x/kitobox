@@ -26,13 +26,16 @@ private val KitoboxLightColorScheme = lightColorScheme(
 )
 
 private val KitoboxSepiaColorScheme = lightColorScheme(
-    primary = SepiaPrimary,
-    background = SepiaBackground,
-    surface = SepiaBackground,
+    primary = Color(0xFF8D6E63),
+    background = Color(0xFFFBF0E3),
+    surface = Color(0xFFFBF0E3),
     onPrimary = Color.White,
-    onBackground = SepiaOnSurface,
-    onSurface = SepiaOnSurface,
-    onSurfaceVariant = SepiaOnSurface.copy(alpha = 0.7f)
+    onBackground = Color(0xFF5B4B3A),
+    onSurface = Color(0xFF5B4B3A),
+    onSurfaceVariant = Color(0xFF5B4B3A).copy(alpha = 0.7f),
+    primaryContainer = Color(0xFF6D4C41),
+    onPrimaryContainer = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFEFEBE9)
 )
 
 @Composable

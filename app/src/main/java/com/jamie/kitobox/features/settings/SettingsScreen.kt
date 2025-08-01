@@ -1,157 +1,175 @@
 package com.jamie.kitobox.features.settings
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jamie.kitobox.data.repository.AppTheme
+import com.jamie.kitobox.data.repository.FontStyle
 import com.jamie.kitobox.ui.theme.KitoboxTheme
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * Composable function for the Settings Screen.
+ * This screen allows users to customize application settings like theme, font style, and font size.
+ *
+ * @param viewModel The [SettingsViewModel] used to manage and persist settings.
+ *                  It is injected using Koin.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel(),
-    onNavigateBack: () -> Unit
+    viewModel: SettingsViewModel = koinViewModel()
 ) {
-    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
+    // Collect current preference states from the ViewModel.
+    // `collectAsStateWithLifecycle` ensures that collection happens only when the Composable is active.
+    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle(initialValue = AppTheme.LIGHT)
+    val currentFontStyle by viewModel.currentFontStyle.collectAsStateWithLifecycle(initialValue = FontStyle.SERIF)
+    val currentFontSize by viewModel.currentFontSize.collectAsStateWithLifecycle(initialValue = 16f)
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back"
-                        )
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+            // "APPEARANCE" section header
+            item { SettingsSection("APPEARANCE") }
             item {
-                SettingsSection("APPEARANCE")
-            }
-            item {
-                // For now, this is a placeholder. We will make it functional later.
-                SettingItem(
+                ThemeSetting(
                     title = "Theme",
                     subtitle = "Light, Dark, Sepia",
-                    // Display the current theme's name
-                    value = currentTheme.name.lowercase().replaceFirstChar { it.titlecase() }
-                ) {
-                    // In a real scenario, this would open a dialog to select the theme.
-                    // For now, we'll just cycle through them for demonstration.
-                    val nextTheme = when (currentTheme) {
-                        AppTheme.LIGHT -> AppTheme.DARK
-                        AppTheme.DARK -> AppTheme.SEPIA
-                        AppTheme.SEPIA -> AppTheme.LIGHT
+                    value = currentTheme,
+                    onClick = {
+                        // Cycle through available themes
+                        val nextTheme = when (currentTheme) {
+                            AppTheme.LIGHT -> AppTheme.DARK
+                            AppTheme.DARK -> AppTheme.SEPIA
+                            AppTheme.SEPIA -> AppTheme.LIGHT
+                        }
+                        viewModel.updateTheme(nextTheme)
                     }
-                    viewModel.updateTheme(nextTheme)
-                }
+                )
             }
             item {
-                SettingItem(
+                FontStyleSetting(
                     title = "Font Style",
                     subtitle = "Serif, Sans, Dyslexia-friendly",
-                    value = "Serif" // Placeholder
-                ) { /* TODO */ }
+                    value = currentFontStyle,
+                    onSelection = { newStyle -> viewModel.updateFontStyle(newStyle) }
+                )
             }
             item {
                 FontSizeSetting(
                     title = "Default Font Size",
-                    value = 16f, // Placeholder
-                    onValueChange = {} // Placeholder
-                )
-            }
-            item {
-                SwitchSetting(
-                    title = "Auto-Night Mode",
-                    checked = true, // Placeholder
-                    onCheckedChange = {} // Placeholder
-                )
-            }
-
-            item {
-                SettingsSection("DATA")
-            }
-            item {
-                SwitchSetting(
-                    title = "Backup / Export Notes",
-                    checked = false, // Placeholder
-                    onCheckedChange = {} // Placeholder
+                    value = currentFontSize,
+                    onValueChange = { newSize -> viewModel.updateFontSize(newSize) }
                 )
             }
         }
     }
-}
 
-// --- Reusable Component Composables ---
 
+/**
+ * Composable for displaying a theme setting item.
+ *
+ * @param title The title of the setting (e.g., "Theme").
+ * @param subtitle A descriptive subtitle for the setting (e.g., "Light, Dark, Sepia").
+ * @param value The current [AppTheme] value.
+ * @param onClick Lambda function to be invoked when the setting item is clicked.
+ */
 @Composable
-fun SettingsSection(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+fun ThemeSetting(title: String, subtitle: String, value: AppTheme, onClick: () -> Unit) {
+    SettingItem(
+        title = title,
+        subtitle = subtitle,
+        valueText = value.name.lowercase().replaceFirstChar { it.titlecase() },
+        onClick = onClick
     )
 }
 
+/**
+ * Composable for displaying and selecting a font style.
+ * This uses an [ExposedDropdownMenuBox] to present font style options.
+ *
+ * @param title The title of the setting (e.g., "Font Style").
+ * @param subtitle A descriptive subtitle (e.g., "Serif, Sans, Dyslexia-friendly").
+ * @param value The current [FontStyle] value.
+ * @param onSelection Lambda function invoked when a new font style is selected.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingItem(
+fun FontStyleSetting(
     title: String,
     subtitle: String,
-    value: String,
-    onClick: () -> Unit
+    value: FontStyle,
+    onSelection: (FontStyle) -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    var expanded by remember { mutableStateOf(false) } // State to control dropdown visibility
+
+    // `ExposedDropdownMenuBox` provides the framework for a dropdown menu.
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = value, color = MaterialTheme.colorScheme.primary)
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        // The `SettingItem` acts as the anchor for the dropdown.
+        // `menuAnchor` modifier specifies this relationship.
+        SettingItem(
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true),
+            title = title,
+            subtitle = subtitle,
+            valueText = value.name.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() },
+            onClick = { expanded = true } // Clicking the item opens the dropdown
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            FontStyle.entries.forEach { style ->
+                DropdownMenuItem(
+                    text = { Text(style.name.replace('_', ' ').lowercase().replaceFirstChar { it.titlecase() }) },
+                    onClick = {
+                        onSelection(style)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
 
+/**
+ * Composable for adjusting the font size using a [Slider].
+ *
+ * @param title The title of the setting (e.g., "Default Font Size").
+ * @param value The current font size value (as a Float).
+ * @param onValueChange Lambda function invoked when the slider value changes.
+ *                      It provides the new font size.
+ */
 @Composable
 fun FontSizeSetting(
     title: String,
@@ -170,33 +188,78 @@ fun FontSizeSetting(
             value = value,
             onValueChange = onValueChange,
             valueRange = 12f..24f,
-            steps = 5
+            steps = 5 // Defines discrete steps for the slider (e.g., 12, 14, 16, 18, 20, 22, 24)
         )
     }
 }
 
+
+/**
+ * A generic composable for displaying a section header in the settings screen.
+ *
+ * @param title The text to display as the section title.
+ */
 @Composable
-fun SwitchSetting(
-    title: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
+fun SettingsSection(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    )
+}
+
+/**
+ * A generic, reusable composable for an individual setting item.
+ * It typically displays a title, subtitle, current value, and an icon.
+ *
+ * @param modifier Optional [Modifier] for customizing the layout.
+ * @param title The main title of the setting.
+ * @param subtitle A descriptive subtitle for the setting.
+ * @param valueText The text representation of the current setting value.
+ * @param onClick Lambda function to be executed when the item is clicked.
+ */
+@Composable
+fun SettingItem(modifier: Modifier = Modifier,title: String, subtitle: String, valueText: String, onClick: () -> Unit) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = valueText, color = MaterialTheme.colorScheme.primary)
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
+
+/**
+ * Preview function for the [SettingsScreen].
+ * This allows for a visual preview of the settings screen layout in Android Studio.
+ * Note: This preview is not interactive and uses default values.
+ */
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
     KitoboxTheme {
-        SettingsScreen(onNavigateBack = {})
+        SettingsScreen()
     }
 }

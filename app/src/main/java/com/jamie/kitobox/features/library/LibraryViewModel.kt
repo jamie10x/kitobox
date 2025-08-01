@@ -1,16 +1,24 @@
 package com.jamie.kitobox.features.library
 
+import android.app.Application
+import android.content.Intent
 import android.net.Uri
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jamie.kitobox.data.model.Book
 import com.jamie.kitobox.data.repository.BookRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LibraryViewModel(
+    application: Application,
     private val bookRepository: BookRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -38,6 +46,11 @@ class LibraryViewModel(
 
     fun importBook(uri: Uri) {
         viewModelScope.launch {
+            val contentResolver = getApplication<Application>().contentResolver
+            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            contentResolver.takePersistableUriPermission(uri, takeFlags)
+
             val newBook = Book(
                 title = uri.lastPathSegment ?: "Unknown Title",
                 author = null,

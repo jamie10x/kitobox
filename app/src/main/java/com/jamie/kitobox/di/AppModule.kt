@@ -8,6 +8,7 @@ import com.jamie.kitobox.data.repository.AnnotationRepository
 import com.jamie.kitobox.data.repository.BookRepository
 import com.jamie.kitobox.data.repository.UserPreferencesRepository
 import com.jamie.kitobox.features.library.LibraryViewModel
+import com.jamie.kitobox.features.notes.AllNotesViewModel
 import com.jamie.kitobox.features.notes.NotesSummaryViewModel
 import com.jamie.kitobox.features.onboarding.OnboardingViewModel
 import com.jamie.kitobox.features.settings.SettingsViewModel
@@ -17,38 +18,28 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single {
-        androidApplication().getSharedPreferences("kitobox_prefs", Context.MODE_PRIVATE)
-    }
-
+    single { androidApplication().getSharedPreferences("kitobox_prefs", Context.MODE_PRIVATE) }
     single {
         Room.databaseBuilder(
-                androidApplication(),
-                AppDatabase::class.java,
-                "kitobox-db"
-            )
-            .fallbackToDestructiveMigration(false)
+            androidApplication(),
+            AppDatabase::class.java,
+            "kitobox-db"
+        )
+            .fallbackToDestructiveMigration(true)
             .build()
     }
-
     single { get<AppDatabase>().bookDao() }
     single { get<AppDatabase>().annotationDao() }
-
-    viewModel { MainViewModel(prefs = get(), userPreferencesRepository = get()) }
-
-    viewModel { OnboardingViewModel(prefs = get()) }
-
 
     single { BookRepository(bookDao = get()) }
     single { UserPreferencesRepository(prefs = get()) }
     single { AnnotationRepository(annotationDao = get()) }
 
+    viewModel { MainViewModel(prefs = get(), userPreferencesRepository = get()) }
+    viewModel { OnboardingViewModel(prefs = get()) }
     viewModel { SettingsViewModel(userPreferencesRepository = get()) }
-    viewModel { LibraryViewModel(bookRepository = get()) }
-    viewModel { params ->
-        ReaderViewModel(bookRepository = get(), annotationRepository = get(), savedStateHandle = params.get())
-    }
-    viewModel { params ->
-        NotesSummaryViewModel(annotationRepository = get(), savedStateHandle = params.get())
-    }
+    viewModel { AllNotesViewModel(bookRepository = get()) }
+    viewModel { LibraryViewModel(application = androidApplication(), bookRepository = get()) }
+    viewModel { params -> ReaderViewModel(bookRepository = get(), annotationRepository = get(), savedStateHandle = params.get()) }
+    viewModel { params -> NotesSummaryViewModel(annotationRepository = get(), savedStateHandle = params.get()) }
 }
